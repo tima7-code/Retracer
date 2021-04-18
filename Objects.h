@@ -6,9 +6,9 @@ class object
 public:
 
 	int size = 0;
-	float reflectivity = 0.0;
-	Vector3f obj = Vector3f(0.0, 0.0, 0.0);
-	Vector3f color = Vector3f(1.0, 1.0, 1.0);
+	Vector3f properties = Vector3f(0.0, 0.0, 0.0);
+	Vector3f obj =        Vector3f(0.0, 0.0, 0.0);
+	Vector3f color =      Vector3f(1.0, 1.0, 1.0);
 	const char* name = "name";
 
 	virtual void move() = 0;
@@ -18,18 +18,19 @@ public:
 class sphere : public object
 {
 public:
-	sphere(Vector3f coord, Vector3f RGB, int radius, float reflectivity)
+	sphere(Vector3f coord, Vector3f RGB, int radius, Vector3f RNM)
 	{
 		name = "sphere";
 		size = radius;
 		obj = Vector3f(coord.x, coord.y, coord.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
-		if (reflectivity > 1.0)
-			this->reflectivity = 1.0;
-		else if (reflectivity < 0.0)
-			this->reflectivity = 0.0;
-		else
-			this->reflectivity = reflectivity;
+
+		if (RNM.x > 1.0)      this->properties.x = 1.0;
+		else if (RNM.x < 0.0) this->properties.x = 0.0;
+		else                  this->properties.x = RNM.x;
+
+		if (RNM.y < 0.0)      this->properties.y = 0.0;
+		else                  this->properties.y = RNM.y;
 	}
 
 	void move() override {}
@@ -40,18 +41,19 @@ public:
 class cube : public object
 {
 public:
-	cube(Vector3f coord, Vector3f RGB, int edge, float reflectivity)
+	cube(Vector3f coord, Vector3f RGB, int edge, Vector3f RNM)
 	{
 		name = "cube";
 		size = edge;
 		obj = Vector3f(coord.x, coord.y, coord.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
-		if (reflectivity > 1.0)
-			this->reflectivity = 1.0;
-		else if (reflectivity < 0.0)
-			this->reflectivity = 0.0;
-		else
-			this->reflectivity = reflectivity;
+
+		if (RNM.x > 1.0)      this->properties.x = 1.0;
+		else if (RNM.x < 0.0) this->properties.x = 0.0;
+		else                  this->properties.x = RNM.x;
+
+		if (RNM.y < 0.0)      this->properties.y = 0.0;
+		else                  this->properties.y = RNM.y;
 	}
 
 	void move() override {}
@@ -62,17 +64,18 @@ public:
 class plane : public object
 {
 public:
-	plane(Vector3f normal, Vector3f RGB, float reflectivity)
+	plane(Vector3f normal, Vector3f RGB, Vector3f RNM)
 	{
 		name = "plane";
 		obj = Vector3f(normal.x, normal.y, normal.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
-		if (reflectivity > 1.0)
-			this->reflectivity = 1.0;
-		else if (reflectivity < 0.0)
-			this->reflectivity = 0.0;
-		else
-			this->reflectivity = reflectivity;
+
+		if (RNM.x > 1.0)      this->properties.x = 1.0;
+		else if (RNM.x < 0.0) this->properties.x = 0.0;
+		else                  this->properties.x = RNM.x;
+
+		if (RNM.y < 0.0)      this->properties.y = 0.0;
+		else                  this->properties.y = RNM.y;
 	}
 
 	void move() override {}

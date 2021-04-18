@@ -6,7 +6,7 @@ uniform vec3 obj_coord[obj_number];
 uniform vec3 obj_color[obj_number];
 uniform float obj_name[obj_number];
 uniform float obj_size[obj_number];
-uniform float obj_ref [obj_number];
+uniform vec3  obj_prop[obj_number];
 
 uniform vec3 source_coord[obj_number];
 uniform vec3 source_color[obj_number];
@@ -21,8 +21,8 @@ int max_dist = 99999;
 vec3 camera = cam;
 int ref_number = 100;
 
-vec3 Raycast(inout vec3 rd, inout float reflectivity);
 vec3 Raytrace(vec3 rd);
+vec3 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction);
 
 vec2 intersections(in int i, in vec3 rd);
 vec2 sphere       (in int i, in vec3 rd);
@@ -44,7 +44,7 @@ void main()
     gl_FragColor = vec4(Raytrace(ray_direction), 1.0);
 }
 
-vec3 Raycast(inout vec3 rd, inout float reflectivity)
+vec3 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction)
 {
     vec3 normal;
     vec2 v = vec2(0.0);
@@ -52,6 +52,7 @@ vec3 Raycast(inout vec3 rd, inout float reflectivity)
     vec3 sky_color = vec3(0.8, 1.0, 1.0);
     vec3 color = vec3(0.0);
 
+    refraction   = 0.0;
     reflectivity = 0.0;
 
     for(int i = 0; i < obj_number; i++)
@@ -61,31 +62,47 @@ vec3 Raycast(inout vec3 rd, inout float reflectivity)
         {
             min_v = v;
             color = obj_color[i];
-            reflectivity = obj_ref[i];
+            reflectivity = obj_prop[i].x;
+            refraction   = obj_prop[i].y;
             normal = object_normal(i, rd, v);
         }
     }
 
     if (min_v.x == max_dist) return sky_color;
-    camera += rd * (min_v.x - 0.001);
-    if (reflectivity != 0.0) rd = reflect(rd, normal);
+
+    if (reflectivity != 0.0)
+    {
+        camera += rd * (min_v.x - 0.001);
+        rd = reflect(rd, normal);
+    }
+    if (refraction   != 0.0) 
+    {
+        camera += rd * (min_v.y + 0.001);
+        rd = refract(rd, normal, 1.0 / refraction);
+    }
     return color;
 }
 
 vec3 Raytrace(in vec3 rd)
 {
     float reflectivity = 0.0;
-    vec3 color = Raycast(rd, reflectivity);
+    float refraction   = 0.0;
 
-    if(reflectivity != 0.0)
+    vec3 color = Raycast(rd, reflectivity, refraction);
+
+    if(reflectivity != 0.0 || refraction != 0)
     {
         for(int i = 0; i < ref_number - 1; i++)
         {   
             if (reflectivity != 0.0)
-                color *= reflectivity * Raycast(rd, reflectivity);
+                color *= reflectivity * Raycast(rd, reflectivity, refraction);
+            else if (refraction != 0.0)
+            {
+                color *= Raycast(rd, reflectivity, refraction);
+            }
             else
             {
-                color *= Raycast(rd, reflectivity);
+                color *= Raycast(rd, reflectivity, refraction);
                 break;
             }
         }
