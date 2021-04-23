@@ -11,8 +11,8 @@ public:
 	Vector3f color =      Vector3f(1.0, 1.0, 1.0);
 	const char* name = "name";
 
-	virtual void move() = 0;
-	virtual void rotation() = 0;
+	virtual bool move() = 0;
+	virtual bool rotation() = 0;
 };
 
 class sphere : public object
@@ -33,9 +33,9 @@ public:
 		else                  this->properties.y = RNM.y;
 	}
 
-	void move() override {}
+	bool move() override { return false; }
 
-	void rotation() override {}
+	bool rotation() override { return false; }
 };
 
 class cube : public object
@@ -56,9 +56,9 @@ public:
 		else                  this->properties.y = RNM.y;
 	}
 
-	void move() override {}
+	bool move() override { return false; }
 
-	void rotation() override {}
+	bool rotation() override { return false; }
 };
 
 class plane : public object
@@ -78,9 +78,9 @@ public:
 		else                  this->properties.y = RNM.y;
 	}
 
-	void move() override {}
+	bool move() override { return false; }
 
-	void rotation() override {}
+	bool rotation() override { return false; }
 };
 
 class light : public object
@@ -94,9 +94,9 @@ public:
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
 	}
 
-	void move() override {}
+	bool move() override { return false; }
 
-	void rotation() override {}
+	bool rotation() override { return false; }
 };
 
 class camera : public object
@@ -112,7 +112,7 @@ public:
 		obj = Vector3f(coord.x, coord.y, coord.z);
 	}
 
-	void move() override
+	bool move() override
 	{
 		static Vector3f route;
 		static Vector3f route_temp;
@@ -128,19 +128,25 @@ public:
 		route.z = route_temp.x * sin(phi.x) + route_temp.z * cos(phi.x);
 		route.y = route_temp.y;
 		obj += route * speed;
+		if (route != Vector3f(0.0, 0.0, 0.0)) return true;
+		else                                  return false;
 	}
 
-	void rotation() override
+	bool rotation() override
 	{
 		static Vector2f displace = Vector2f(0.0, 0.0);
+		static Vector2f disp;
 		static Vector2i mouse;
 		mouse = Mouse::getPosition(window);
 		Mouse::setPosition(Vector2i(width / 2, height / 2), window);
+		disp = displace;
 		displace.x += mouse.x - width / 2;
 		displace.y += mouse.y - height / 2;
 		phi.x = displace.x / width;
 		phi.y = displace.y / height;
 		phi *= mouse_sensitivity;
 		shader.setUniform("mouse", Vector2f(phi.x, phi.y));
+		if (disp != displace) return true;
+		else                  return false;
 	}
 };
