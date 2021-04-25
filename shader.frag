@@ -1,28 +1,37 @@
 #version 130
+//Ñustomization----------------------------------------------------------------------------------
+const int ref_number = 100; 
+const int rays_number = 4;  
+vec4 sky_color = vec4(0.0, 0.0, 0.0, -1.0); 
+//-----------------------------------------------------------------------------------------------
 
-const int ref_number = 100;
-const int rays_number = 4;
-vec4 sky_color = vec4(0.0, 0.0, 0.0, -1.0);
-
+//Information about objects----------------------------------------------------------------------
 const int     obj_number = 10;
 uniform vec3  obj_coord[obj_number];
 uniform vec3  obj_color[obj_number];
 uniform float obj_name[obj_number];
 uniform float obj_size[obj_number];
 uniform vec3  obj_prop[obj_number];
+//-----------------------------------------------------------------------------------------------
 
+//Information about light sources----------------------------------------------------------------
 const int     sources_number = 10;
 uniform vec3  source_coord[obj_number];
 uniform vec3  source_color[obj_number];
 uniform float source_size[obj_number];
+//-----------------------------------------------------------------------------------------------
 
-
+//Camera, mouse, screen dimensions, and different constants--------------------------------------
 uniform vec3 cam;
 uniform vec2 mouse;
 uniform vec2 u_resolution;
 uniform sampler2D u_sample;
 uniform float u_sample_part;
+float max_dist = 99999.0;
+vec3 camera = cam;
+//-----------------------------------------------------------------------------------------------
 
+//Random-----------------------------------------------------------------------------------------
 uvec4 R_STATE;
 uniform vec2 seed1;
 uniform vec2 seed2;
@@ -31,26 +40,30 @@ float random();
 vec3 random_vector();
 uint TausStep(uint z, int S1, int S2, int S3, uint M);
 uint LCGStep (uint z, uint A, uint C);
+//-----------------------------------------------------------------------------------------------
 
-float max_dist = 99999.0;
-vec3 camera = cam;
-
+//Function prototypes----------------------------------------------------------------------------
 vec3 Raytrace(vec3 rd);
 vec4 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction);
 
+//intersection functions
 vec2 intersections(in int i, in vec3 rd);
 vec2 sphere       (in int i, in vec3 rd);
 vec2 cube         (in int i, in vec3 rd);
 vec2 plane        (in int i, in vec3 rd);
 vec2 source       (in int i, in vec3 rd);
 
+//normal
 vec3 object_normal(in int i, in vec3 rd, in vec2 v);
 
+//rotation
 mat2 rotation(float phi);
 
+//tonemapping
 vec3 mul(const mat3 m, const vec3 v);
 vec3 rtt_and_odt_fit(vec3 v);
 vec3 aces_fitted(vec3 v);
+//-----------------------------------------------------------------------------------------------
 
 void main()
 {
@@ -172,7 +185,13 @@ vec3 object_normal(in int i, in vec3 rd, in vec2 v)
         vec3 t1 = (-1.0/rd * (camera - obj_coord[i]) - abs(1.0/rd) * obj_size[i]);
         return normalize(-sign(rd)*step(t1.yzx,t1.xyz)*step(t1.zxy,t1.xyz));
     }
-    if (obj_name[i] == 3.0) return normalize(obj_coord[i]);
+    if (obj_name[i] == 3.0) 
+    {
+        float l_coord = length(obj_coord[i]);
+        float projection = dot(camera, obj_coord[i]) / l_coord;
+        if (projection <= l_coord) return normalize(-obj_coord[i]);
+        else                       return normalize( obj_coord[i]);
+    }
 }
 
 vec2 source(in int i, in vec3 rd)
@@ -213,7 +232,12 @@ vec2 sphere(in int i, in vec3 rd)
 
 vec2 plane(in int i, in vec3 rd)
 {
-    return vec2(-(dot(camera, obj_coord[i]) + 1.0) / dot(rd,obj_coord[i]));
+    vec3 n;
+    float l_coord = length(obj_coord[i]);
+    float projection = dot(camera, obj_coord[i]) / l_coord;
+    if (projection > l_coord) n = normalize(-obj_coord[i]);
+    else                      n = normalize( obj_coord[i]);
+    return vec2(-(dot(camera - obj_coord[i], n) + 1.0) / dot(rd, n));
 }
 
 mat2 rotation(float phi)

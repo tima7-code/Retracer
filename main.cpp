@@ -11,16 +11,16 @@ int frames = 1;
 
 int main()
 {
-	std::vector<object*> objects = { &sphere(Vector3f( 100,  -50,    0), Vector3f(255, 255, 255), 20, Vector3f(0.0, 1.5, 0.0)),
-									 &sphere(Vector3f( 100,  -25,   80), Vector3f(255, 255, 255), 20, Vector3f(0.5, 0.0, 0.0)),
-									 &sphere(Vector3f( 150,  -25,   90), Vector3f(255,   0,   0), 20, Vector3f(0.0, 0.0, 0.0)),
-									 &cube  (Vector3f(-150,  -50,    0), Vector3f(255, 255, 255), 30, Vector3f(1.0, 0.0, 0.0)),
-									 &cube  (Vector3f(-330,  -50,    0), Vector3f(255, 255, 255), 30, Vector3f(1.0, 0.0, 0.0)),
-									 &cube  (Vector3f(   0,  -50,   90), Vector3f(255, 255, 125), 30, Vector3f(0.0, 0.0, 0.0)),
-									 &plane (Vector3f(   0,   -1,    0), Vector3f(125, 125, 125),     Vector3f(0.0, 0.0, 0.0)),
-									 &light (Vector3f( 400, -300,  200), Vector3f(255, 255, 255), 99                         ),
-									 //&light (Vector3f(  30,  -60,  -30), Vector3f(255, 255, 255), 20                         ),
-									 &camera(Vector3f(   0,  -50,  200)                                                      ) };
+	std::vector<object*> objects = { &sphere(Vector3f( 100,   50,    0), Vector3f(255, 255, 255), 20, Vector3f(0.0, 1.5, 0.0)),
+									 &sphere(Vector3f( 100,   40,   80), Vector3f(255, 255, 255), 20, Vector3f(0.5, 0.0, 0.0)),
+									 &sphere(Vector3f( 150,   25,   90), Vector3f(255,   0,   0), 20, Vector3f(0.0, 0.0, 0.0)),
+									 &cube  (Vector3f(-150,   50,    0), Vector3f(255, 255, 255), 30, Vector3f(1.0, 0.0, 0.0)),
+									 &cube  (Vector3f(-330,   50,    0), Vector3f(255, 255, 255), 30, Vector3f(1.0, 0.0, 0.0)),
+									 &cube  (Vector3f(   0,   50,   90), Vector3f(255, 255, 125), 30, Vector3f(0.0, 0.0, 0.0)),
+									 &plane (Vector3f(   0,   20,    0), Vector3f(125, 125, 125),     Vector3f(0.0, 0.0, 0.0)),
+									 &light (Vector3f( 400,  300,  200), Vector3f(255, 255, 255), 99                         ),
+									 //&light (Vector3f(  30,   60,  -30), Vector3f(255, 255, 255), 20                         ),
+									 &camera(Vector3f(   0,   50,  200)                                                      ) };
 
 	window.setMouseCursorVisible(false);
 	window.setFramerateLimit(60);
@@ -79,16 +79,16 @@ int main()
 void to_shader(std::vector<object*> objects)
 {
 	const size_t object_number = 10;
-	float obj_name[object_number];
-	float obj_size[object_number];
-	Vector3f obj_prop[object_number];
+	float    obj_name [object_number];
+	float    obj_size [object_number];
+	Vector3f obj_prop [object_number];
 	Vector3f obj_coord[object_number];
 	Vector3f obj_color[object_number];
 
-	int sources_number = 9;
-	float source_size[object_number];
-	Vector3f source_coord[object_number];
-	Vector3f source_color[object_number];
+	const size_t sources_number = 10;
+	float    source_size [sources_number];
+	Vector3f source_coord[sources_number];
+	Vector3f source_color[sources_number];
 
 	size_t array_size = objects.size() - 1;
 
@@ -107,7 +107,6 @@ void to_shader(std::vector<object*> objects)
 		}
 		else if (objects[i]->name == "light")
 		{
-			sources_number++;
 			source_size[i] = objects[i]->size;
 			source_coord[i] = objects[i]->obj;
 			source_color[i] = objects[i]->color;

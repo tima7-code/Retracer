@@ -22,7 +22,7 @@ public:
 	{
 		name = "sphere";
 		size = radius;
-		obj = Vector3f(coord.x, coord.y, coord.z);
+		obj = Vector3f(coord.x, -coord.y, coord.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
 
 		if (RNM.x > 1.0)      this->properties.x = 1.0;
@@ -45,7 +45,7 @@ public:
 	{
 		name = "cube";
 		size = edge;
-		obj = Vector3f(coord.x, coord.y, coord.z);
+		obj = Vector3f(coord.x, -coord.y, coord.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
 
 		if (RNM.x > 1.0)      this->properties.x = 1.0;
@@ -67,7 +67,7 @@ public:
 	plane(Vector3f normal, Vector3f RGB, Vector3f RNM)
 	{
 		name = "plane";
-		obj = Vector3f(normal.x, normal.y, normal.z);
+		obj = Vector3f(normal.x, -normal.y, normal.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
 
 		if (RNM.x > 1.0)      this->properties.x = 1.0;
@@ -90,7 +90,7 @@ public:
 	{
 		name = "light";
 		size = radius;
-		obj = Vector3f(coord.x, coord.y, coord.z);
+		obj = Vector3f(coord.x, -coord.y, coord.z);
 		color = Vector3f(RGB.x / 255, RGB.y / 255, RGB.z / 255);
 	}
 
@@ -109,7 +109,7 @@ public:
 
 	camera(Vector3f coord)
 	{
-		obj = Vector3f(coord.x, coord.y, coord.z);
+		obj = Vector3f(coord.x, -coord.y, coord.z);
 	}
 
 	bool move() override
