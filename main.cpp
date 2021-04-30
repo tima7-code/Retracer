@@ -1,5 +1,6 @@
 #include <random>
 #include "Objects.h"
+#include "Interface.h"
 
 void to_shader(std::vector<object*> objects);
 
@@ -11,6 +12,12 @@ int frames = 1;
 
 int main()
 {
+	interface.setPosition(Vector2i(0, 0));
+	window.setPosition(Vector2i(i_width, 0));
+
+	interface_manager InterfaceManager;
+	InterfaceManager.getIcons();
+
 	std::vector<object*> objects = { &sphere(Vector3f( 100,   50,    0), Vector3f(255, 255, 255), 20, Vector3f(0.0, 1.5, 0.0)),
 									 &sphere(Vector3f( 100,   40,   80), Vector3f(255, 255, 255), 20, Vector3f(0.5, 0.0, 0.0)),
 									 &sphere(Vector3f( 150,   25,   90), Vector3f(255,   0,   0), 20, Vector3f(0.0, 0.0, 0.0)),
@@ -22,8 +29,8 @@ int main()
 									 //&light (Vector3f(  30,   60,  -30), Vector3f(255, 255, 255), 20                         ),
 									 &camera(Vector3f(   0,   50,  200)                                                      ) };
 
-	window.setMouseCursorVisible(false);
 	window.setFramerateLimit(60);
+	window.setMouseCursorVisible(false);
 
 	RenderTexture texture1;
 	texture1.create(width, height);
@@ -41,17 +48,54 @@ int main()
 
 	shader.loadFromFile("shader.frag", Shader::Fragment);
 
-	while (window.isOpen())
+	int esc_counter = 0;
+	bool select_button = false;
+	while (window.isOpen() && interface.isOpen())
 	{
 		Event event;
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
 				window.close();
+			
+			if (event.type == Event::KeyPressed)
+			{
+				if(event.key.code == Keyboard::Escape) esc_counter++;
+				if(esc_counter % 2 == 0) window.setMouseCursorVisible(false);
+				else                     window.setMouseCursorVisible(true);
+			}
 		}
 
-		if (objects[objects.size() - 1]->rotation()) frames = 1;
-		if (objects[objects.size() - 1]->move())     frames = 1;
+		while (interface.pollEvent(event))
+		{
+			if (event.type == Event::Closed)
+				interface.close();
+
+			if (event.type == Event::MouseButtonReleased)
+			{
+				select_button = true;
+				break;
+			}
+
+			if (event.type == Event::MouseButtonPressed && select_button)
+			{
+				InterfaceManager.ButtonPressed();
+				select_button = false;
+				break;
+			}
+
+			if (event.type == Event::MouseMoved && !select_button)
+			{
+				InterfaceManager.ButtonPressed();
+				break;
+			}
+		}
+
+		if (esc_counter % 2 == 0)
+		{
+			if (objects[objects.size() - 1]->rotation()) frames = 1;
+			if (objects[objects.size() - 1]->move())     frames = 1;
+		}
 
 		to_shader(objects);
 
@@ -68,7 +112,11 @@ int main()
 			window.draw(sprite1);
 		}
 
+		interface.clear(Color(83, 83, 83));
+		InterfaceManager.DrawInterface();
+
 		window.display();
+		interface.display();
 
 		frames++;
 	}
