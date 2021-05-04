@@ -47,9 +47,11 @@ int main()
 	copy_sprite2.setPosition(0, height);
 
 	shader.loadFromFile("shader.frag", Shader::Fragment);
+	preview_shader.loadFromFile("preview_shader.frag", Shader::Fragment);
 
-	int esc_counter = 0;
+	int esc_counter = 1;
 	bool select_button = false;
+
 	while (window.isOpen() && interface.isOpen())
 	{
 		Event event;
@@ -112,8 +114,11 @@ int main()
 			window.draw(sprite1);
 		}
 
-		interface.clear(Color(83, 83, 83));
-		InterfaceManager.DrawInterface();
+		if (esc_counter % 2 != 0)
+		{
+			interface.clear(Color(83, 83, 83));
+			InterfaceManager.DrawInterface();
+		}
 
 		window.display();
 		interface.display();

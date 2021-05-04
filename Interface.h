@@ -10,8 +10,8 @@ Sprite  cube_icon;
 Image   cube_image;
 Texture cube_texture;
 
-Sprite light_icon;
-Image light_image;
+Sprite  light_icon;
+Image   light_image;
 Texture light_texture;
 
 class Interface
@@ -22,6 +22,7 @@ public:
 
 	int click_counter = 0;
 	const char* name = "Interface";
+	bool selected = false;
 
 	virtual void draw()    = 0;
 	virtual float action() = 0;
@@ -141,9 +142,11 @@ public:
 
 class object_preview : public Interface
 {
-	Vector3f color = Vector3f(0, 0, 0);
+	Vector3f color         = Vector3f(0, 0, 0);
+	Vector3f size_spec_ref = Vector3f(0, 0, 0);
+	Vector2f phi           = Vector2f(0, 0);
+
 	const char* object_name = "";
-	int object_size = 100;
 
 public:
 	object_preview(Vector2f size, Vector2f pos)
@@ -155,21 +158,6 @@ public:
 
 	void draw() override
 	{
-		RectangleShape rectangle(size);
-		rectangle.move(pos);
-		rectangle.setFillColor(Color(59, 59, 59));
-
-		RectangleShape rect1(Vector2f(size.x - 20, size.y / 2 - 10));
-		rect1.move(Vector2f(pos.x + 10, pos.y + 10));
-		rect1.setFillColor(Color(0, 191, 255));
-
-		RectangleShape rect2(Vector2f(size.x - 20, size.y / 2 - 10));
-		rect2.move(Vector2f(pos.x + 10, pos.y + size.y / 2));
-		rect2.setFillColor(Color(125, 125, 125));
-
-		CircleShape sphere;
-		RectangleShape cube;
-		CircleShape light;
 		Text name;
 		Font font;
 		font.loadFromFile("Fonts/arial.ttf");
@@ -178,38 +166,66 @@ public:
 		name.setCharacterSize(24);
 		name.move(Vector2f(pos.x + 10, pos.y - 30));
 
-		if (object_name == "sphere")
-		{
-			sphere.setRadius(object_size / 2);
-			sphere.setFillColor(Color(color.x, color.y, color.z));
-			sphere.move(Vector2f(pos.x + size.x / 3, pos.y + size.x / 3));
-		}
-		if (object_name == "cube")
-		{
-			cube.setSize(Vector2f(object_size, object_size));
-			cube.setFillColor(Color(color.x, color.y, color.z));
-			cube.move(Vector2f(pos.x + size.x / 3, pos.y + size.x / 3));
-		}
-		if (object_name == "light")
-		{
-			light.setRadius(object_size / 2);
-			light.setFillColor(Color(color.x, color.y, color.z));
-			light.move(Vector2f(pos.x + size.x / 3, pos.y + size.x / 3));
-		}
+		RectangleShape rect(size);
+		rect.setFillColor(Color(59, 59, 59));
+		rect.move(pos);
 
-		interface.draw(rectangle);
-		interface.draw(rect1);
-		interface.draw(rect2);
+		RenderTexture preview_texture;
+		preview_texture.create(size.x - 20, size.y - 20);
 
-		interface.draw(sphere);
-		interface.draw(cube);
-		interface.draw(light);
+		Sprite preview_sprite;
+		preview_sprite = Sprite(preview_texture.getTexture());
+		preview_sprite.move(Vector2f(pos.x + 10, pos.y + 10));
+
+		Vector3f obj_color[2];
+		float    obj_name [2];
+		float    obj_size [2];
+		Vector3f obj_prop [2]; 
+
+		obj_color[0] = Vector3f(0.5, 0.5, 0.5);
+		obj_name [0] = 3.0;
+		obj_size [0] = 0;
+		obj_prop [0] = Vector3f(0.0, 0.0, 0.0);
+		obj_color[1] = Vector3f(color.x / 255, color.y / 255, color.z / 255);
+		obj_size [1] = size_spec_ref.x;
+		obj_prop [1] = Vector3f(size_spec_ref.y, size_spec_ref.z, 0);
+
+		if (object_name == "sphere")  obj_name[1] = 1.0;
+		if (object_name == "cube")    obj_name[1] = 2.0;
+		if (object_name == "light") { obj_name[1] = 1.0; obj_prop[1] = Vector3f(0, 0, 0); }
+
+		preview_shader.setUniformArray("obj_color", obj_color, 2);
+		preview_shader.setUniformArray("obj_name",  obj_name,  2);
+		preview_shader.setUniformArray("obj_size",  obj_size,  2);
+		preview_shader.setUniformArray("obj_prop",  obj_prop,  2);
+
+		preview_shader.setUniform("u_resolution", Vector2f(size.x - 20, size.y - 20));
+		preview_shader.setUniform("phi", phi);
+
+		interface.draw(rect);
 		interface.draw(name);
+		interface.draw(preview_sprite, &preview_shader);
 	}
 
 	float action() override { return -1; }
 
-	bool click() override { return false; }
+	bool click() override 
+	{
+		static Vector2i coord1, coord2 = Mouse::getPosition(interface);
+
+		coord1 = Mouse::getPosition(interface);
+		if (coord1.x >= pos.x + 10 && coord1.x <= pos.x + size.x - 10 &&
+			coord1.y >= pos.y + 10 && coord1.y <= pos.y + size.y - 10)
+		{
+			if (abs(coord2.x - coord1.x) > size.x / 8 || abs(coord2.y - coord1.y) > size.y / 8)
+				coord2 = coord1;
+			phi.x += (coord1.x - coord2.x) / (size.x - 20);
+			phi.y += (coord1.y - coord2.y) / (size.y - 20);
+			coord2 = coord1;
+		}
+
+		return false;
+	}
 
 	void set_obj_name(const char* str)
 	{
@@ -220,12 +236,17 @@ public:
 	{
 		this->color = color;
 	}
+
+	void set_obj_properties(Vector3f ssr)
+	{
+		this->size_spec_ref = ssr;
+	}
 };
 
 class button_switch : public Interface
 {
 	float lenght = 0;
-	int switch_pos = 4;
+	int switch_pos = 0;
 	Vector2f switch_size = Vector2f(6, 12);
 	Vector2f value_size = Vector2f(60, 30);
 	bool selected = false;
@@ -342,9 +363,12 @@ public:
 		buttons.push_back(new button_add_sphere(Vector2f( 96,  96), Vector2f(  3,   3)));
 		buttons.push_back(new button_add_cube  (Vector2f( 96,  96), Vector2f(102,   3)));
 		buttons.push_back(new button_add_light (Vector2f( 96,  96), Vector2f(201,   3)));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 504), "R: 0", 255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 557), "G: 0", 255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 610), "B: 0", 255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 536), "R: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 589), "G: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 642), "B: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 727), "si: 0", 200, -6));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 780), "sp:0",  1.0, -4));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 833), "n: 0",  2.5, -4));
 		buttons.push_back(preview);
 	}
 
@@ -370,7 +394,29 @@ public:
 	{
 		for (int i = 0; i < buttons.size(); i++)
 		{ 
-			buttons[i]->draw();
+			Font font;
+			font.loadFromFile("Fonts/arial.ttf");
+			Text color("Color:", font, 24);
+			Text properties("Properties:", font, 24);
+			color.move(100, 504);
+			properties.move(80, 696);
+			if (buttons[i]->click_counter >= 0) buttons[i]->draw();
+
+			if (buttons[i]->selected && buttons[i]->name == "light")
+			{
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter == -2 || buttons[i]->click_counter == -6) buttons[i]->draw();
+				interface.draw(color);
+				interface.draw(properties);
+			}
+
+			if (buttons[i]->selected && buttons[i]->name != "light")
+			{
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter < 0) buttons[i]->draw();
+				interface.draw(color);
+				interface.draw(properties);
+			}
 		}
 	}
 
@@ -378,32 +424,54 @@ public:
 	{
 		static int number_pressed_button = 0;
 		static Vector3f Color;
-		int k = 0;
+		static Vector3f SSR;
+		int k1 = 0;
+		int k2 = 0;
 
 		for (int i = 0; i < buttons.size(); i++)
 		{
 			if (buttons[i]->click())
 			{
-				if (buttons[i]->click_counter % 2 != 0) preview->set_obj_name(buttons[i]->name);
-				else                                    preview->set_obj_name("");
+				if (buttons[i]->click_counter % 2 != 0)
+				{
+					buttons[i]->selected = true;
+					preview->set_obj_name(buttons[i]->name);
+				}
+				else
+				{
+					buttons[i]->selected = false;
+					preview->set_obj_name("");
+				}
 				number_pressed_button = i;
 			}
 
 			if (buttons[i]->click_counter == -2)
 			{
-				k++;
-				if (k == 1) Color.x = buttons[i]->action();
-				if (k == 2) Color.y = buttons[i]->action();
-				if (k == 3) Color.z = buttons[i]->action();
+				k1++;
+				if (k1 == 1) Color.x = buttons[i]->action();
+				if (k1 == 2) Color.y = buttons[i]->action();
+				if (k1 == 3) Color.z = buttons[i]->action();
+			}
+
+			if (buttons[i]->click_counter < -2)
+			{
+				k2++;
+				if (k2 == 1) SSR.x = buttons[i]->action();
+				if (k2 == 2) SSR.y = buttons[i]->action();
+				if (k2 == 3) SSR.z = buttons[i]->action();
 			}
 		}
 
 		preview->set_obj_color(Color);
+		preview->set_obj_properties(SSR);
 
 		for (int i = 0; i < buttons.size(); i++)
 		{
 			if (buttons[i]->click_counter % 2 != 0 && i != number_pressed_button)
+			{
+				buttons[i]->selected = false;
 				buttons[i]->click_counter--;
+			}
 		}
 	}
 
