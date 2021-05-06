@@ -14,6 +14,15 @@ Sprite  light_icon;
 Image   light_image;
 Texture light_texture;
 
+Sprite  background_icon;
+Image   background_image;
+Texture background_texture;
+
+Texture sky_texture;
+
+float brightness = 1.0;
+float bright_copy;
+
 class Interface
 {
 public:
@@ -140,6 +149,43 @@ public:
 	}
 };
 
+class button_background : public Interface
+{
+public:
+	button_background(Vector2f size, Vector2f pos)
+	{
+		this->size = size;
+		this->pos = pos;
+		this->name = "background";
+	}
+
+	void draw() override
+	{
+		RectangleShape rectangle(size);
+		rectangle.move(pos);
+		if (click_counter % 2 == 0) rectangle.setFillColor(Color(83, 83, 83));
+		else					    rectangle.setFillColor(Color(59, 59, 59));
+
+		background_icon.setPosition(pos + Vector2f(13, 13));
+
+		interface.draw(rectangle);
+		interface.draw(background_icon);
+	}
+
+	float action() override { return -1; }
+
+	bool click() override
+	{
+		Vector2i mouse = Mouse::getPosition(interface);
+		if (mouse.x >= pos.x && mouse.y >= pos.y && mouse.x <= pos.x + size.x && mouse.y <= pos.y + size.y && Mouse::isButtonPressed(Mouse::Button::Left))
+		{
+			click_counter++;
+			return true;
+		}
+		return false;
+	}
+};
+
 class object_preview : public Interface
 {
 	Vector3f color         = Vector3f(0, 0, 0);
@@ -201,6 +247,7 @@ public:
 
 		preview_shader.setUniform("u_resolution", Vector2f(size.x - 20, size.y - 20));
 		preview_shader.setUniform("phi", phi);
+		preview_shader.setUniform("u_skybox", sky_texture);
 
 		interface.draw(rect);
 		interface.draw(name);
@@ -359,16 +406,18 @@ class interface_manager
 public:
 	interface_manager()
 	{
-		preview =         new object_preview   (Vector2f(300, 300), Vector2f(  0, 201));
+		preview =         new object_preview   (Vector2f(300, 300), Vector2f(  0, 225));
 		buttons.push_back(new button_add_sphere(Vector2f( 96,  96), Vector2f(  3,   3)));
 		buttons.push_back(new button_add_cube  (Vector2f( 96,  96), Vector2f(102,   3)));
 		buttons.push_back(new button_add_light (Vector2f( 96,  96), Vector2f(201,   3)));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 536), "R: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 589), "G: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 642), "B: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 727), "si: 0", 200, -6));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 780), "sp:0",  1.0, -4));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 833), "n: 0",  2.5, -4));
+		buttons.push_back(new button_background(Vector2f( 96,  96), Vector2f(  3, 102)));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 560), "R: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 613), "G: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 666), "B: 0",  255, -2));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 751), "si: 0", 200, -6));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 804), "sp:0",  1.0, -4));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 857), "n: 0",  2.5, -4));
+		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 560), "Br:0",  100, -8));
 		buttons.push_back(preview);
 	}
 
@@ -388,6 +437,13 @@ public:
 		light_image.createMaskFromColor(Color(255, 255, 255));
 		light_texture.loadFromImage(light_image);
 		light_icon.setTexture(light_texture);
+
+		background_image.loadFromFile("Icons/backgroundicon.png");
+		background_image.createMaskFromColor(Color(255, 255, 255));
+		background_texture.loadFromImage(background_image);
+		background_icon.setTexture(background_texture);
+
+		sky_texture.loadFromFile("Images/space1.jpeg");
 	}
 
 	void DrawInterface()
@@ -398,23 +454,34 @@ public:
 			font.loadFromFile("Fonts/arial.ttf");
 			Text color("Color:", font, 24);
 			Text properties("Properties:", font, 24);
-			color.move(100, 504);
-			properties.move(80, 696);
+
 			if (buttons[i]->click_counter >= 0) buttons[i]->draw();
 
 			if (buttons[i]->selected && buttons[i]->name == "light")
 			{
 				for (int i = 0; i < buttons.size(); i++)
 					if (buttons[i]->click_counter == -2 || buttons[i]->click_counter == -6) buttons[i]->draw();
+				color.move(100, 528);
 				interface.draw(color);
+				properties.move(80, 720);
 				interface.draw(properties);
 			}
 
-			if (buttons[i]->selected && buttons[i]->name != "light")
+			if (buttons[i]->selected && buttons[i]->name != "light" && buttons[i]->name != "background")
 			{
 				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter < 0) buttons[i]->draw();
+					if (buttons[i]->click_counter < 0 && buttons[i]->click_counter != -8) buttons[i]->draw();
+				color.move(100, 528);
 				interface.draw(color);
+				properties.move(80, 720);
+				interface.draw(properties);
+			}
+
+			if (buttons[i]->selected && buttons[i]->name == "background")
+			{
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter == -8) buttons[i]->draw();
+				properties.move(100, 528);
 				interface.draw(properties);
 			}
 		}
@@ -430,35 +497,58 @@ public:
 
 		for (int i = 0; i < buttons.size(); i++)
 		{
-			if (buttons[i]->click())
+			if (buttons[i]->click_counter >= 0)
 			{
-				if (buttons[i]->click_counter % 2 != 0)
+				if (buttons[i]->click())
 				{
-					buttons[i]->selected = true;
-					preview->set_obj_name(buttons[i]->name);
+					if (buttons[i]->click_counter % 2 != 0)
+					{
+						buttons[i]->selected = true;
+						preview->set_obj_name(buttons[i]->name);
+					}
+					else
+					{
+						buttons[i]->selected = false;
+						preview->set_obj_name("");
+					}
+					number_pressed_button = i;
 				}
-				else
-				{
-					buttons[i]->selected = false;
-					preview->set_obj_name("");
-				}
-				number_pressed_button = i;
 			}
 
-			if (buttons[i]->click_counter == -2)
+			if (buttons[i]->selected && buttons[i]->name != "background")
 			{
-				k1++;
-				if (k1 == 1) Color.x = buttons[i]->action();
-				if (k1 == 2) Color.y = buttons[i]->action();
-				if (k1 == 3) Color.z = buttons[i]->action();
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter == -2)
+					{
+						buttons[i]->click();
+						k1++;
+						if (k1 == 1) Color.x = buttons[i]->action();
+						if (k1 == 2) Color.y = buttons[i]->action();
+						if (k1 == 3) Color.z = buttons[i]->action();
+					}
+			}
+		
+			if (buttons[i]->selected && buttons[i]->name != "background")
+			{
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter == -4 || buttons[i]->click_counter == -6)
+					{
+						buttons[i]->click();
+						k2++;
+						if (k2 == 1) SSR.x = buttons[i]->action();
+						if (k2 == 2) SSR.y = buttons[i]->action();
+						if (k2 == 3) SSR.z = buttons[i]->action();
+					}
 			}
 
-			if (buttons[i]->click_counter < -2)
+			if (buttons[i]->selected && buttons[i]->name == "background")
 			{
-				k2++;
-				if (k2 == 1) SSR.x = buttons[i]->action();
-				if (k2 == 2) SSR.y = buttons[i]->action();
-				if (k2 == 3) SSR.z = buttons[i]->action();
+				for (int i = 0; i < buttons.size(); i++)
+					if (buttons[i]->click_counter == -8)
+					{
+						buttons[i]->click();
+						brightness = 1.0 + 1.5 * buttons[i]->action() / 100;
+					}
 			}
 		}
 
