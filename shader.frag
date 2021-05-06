@@ -1,6 +1,6 @@
 #version 130
 //Ñustomization----------------------------------------------------------------------------------
-const int ref_number = 100; 
+const int ref_number = 8; 
 const int rays_number = 4;  
 vec4 sky_color = vec4(0.0, 0.0, 0.0, -1.0); 
 //-----------------------------------------------------------------------------------------------
@@ -25,7 +25,9 @@ uniform float source_size[obj_number];
 uniform vec3 cam;
 uniform vec2 mouse;
 uniform vec2 u_resolution;
+uniform float brightness;
 uniform sampler2D u_sample;
+uniform sampler2D u_skybox;
 uniform float u_sample_part;
 float max_dist = 99999.0;
 vec3 camera = cam;
@@ -45,6 +47,7 @@ uint LCGStep (uint z, uint A, uint C);
 //Function prototypes----------------------------------------------------------------------------
 vec3 Raytrace(vec3 rd);
 vec4 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction);
+vec4 getSky(vec3 rd);
 
 //intersection functions
 vec2 intersections(in int i, in vec3 rd);
@@ -131,7 +134,7 @@ vec4 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction)
         }
     }
 
-    if (min_v.x == max_dist)  return sky_color;
+    if (min_v.x == max_dist)  return getSky(rd);
     if (color.a == -1.0)      return color;
 
     rand_vec = random_vector();
@@ -319,8 +322,16 @@ vec3 rtt_and_odt_fit(vec3 v)
 
 vec3 aces_fitted(vec3 v)
 {
-    float k = 2.5;
-    v = k*mul(aces_input_matrix, v);
-    v = k*rtt_and_odt_fit(v);
+    v = brightness*mul(aces_input_matrix, v);
+    v = brightness*rtt_and_odt_fit(v);
     return mul(aces_output_matrix, v);
+}
+
+vec4 getSky(vec3 rd)
+{
+    vec2 uv = vec2(atan(rd.x, rd.z), 2 * asin(rd.y));
+    uv /= 3.14159265;
+    uv = uv * 0.5 + 0.5;
+    vec3 color = texture(u_skybox, uv).rgb;
+    return vec4(color, -1.0);
 }

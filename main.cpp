@@ -99,6 +99,12 @@ int main()
 			if (objects[objects.size() - 1]->move())     frames = 1;
 		}
 
+		if (brightness != bright_copy) frames = 1;
+		bright_copy = brightness;
+
+		if (sky_texture_changed) frames = 1;
+		sky_texture_changed = false;
+
 		to_shader(objects);
 
 		if (frames % 2 == 1)
@@ -183,4 +189,6 @@ void to_shader(std::vector<object*> objects)
 	shader.setUniform("seed2", Vector2f((float)dist(e2), (float)dist(e2)) * 999.0f);
 
 	shader.setUniform("u_sample_part", 1.0f / frames);
+	shader.setUniform("u_skybox", sky_texture);
+	shader.setUniform("brightness", brightness);
 }

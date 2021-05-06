@@ -7,6 +7,8 @@ uniform float obj_size[2];
 uniform vec3  obj_prop[2];
 uniform vec2  phi;
 
+uniform sampler2D u_skybox;
+
 vec3 camera = vec3(0, 0, 600);
 uniform vec2 u_resolution;
 
@@ -15,6 +17,7 @@ int ref_number = 2;
 
 vec3 Raytrace(vec3 rd);
 vec3 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction);
+vec3 getSky(vec3 rd);
 
 vec2 intersections(in int i, in vec3 rd);
 vec2 sphere       (in int i, in vec3 rd);
@@ -67,7 +70,7 @@ vec3 Raycast(inout vec3 rd, inout float reflectivity, inout float refraction)
         }
     }
 
-    if (min_v.x == max_dist) return sky_color;
+    if (min_v.x == max_dist) return getSky(rd);
 
     if (reflectivity != 0.0)
     {
@@ -167,4 +170,13 @@ mat2 rotation(float phi)
     float a = sin(phi);
     float b = cos(phi);
     return mat2(b, -a, a, b);
+}
+
+vec3 getSky(vec3 rd)
+{
+    vec2 uv = vec2(atan(rd.x, rd.z), 2 * asin(rd.y));
+    uv /= 3.14159265;
+    uv = uv * 0.5 + 0.5;
+    vec3 color = texture(u_skybox, uv).rgb;
+    return color;
 }

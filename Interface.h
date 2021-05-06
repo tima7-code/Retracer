@@ -18,10 +18,37 @@ Sprite  background_icon;
 Image   background_image;
 Texture background_texture;
 
+Sprite  background1_icon;
+Image   background1_image;
+Texture background1_texture;
+
+Sprite  background2_icon;
+Image   background2_image;
+Texture background2_texture;
+
+Sprite  background3_icon;
+Image   background3_image;
+Texture background3_texture;
+
+Sprite  background4_icon;
+Image   background4_image;
+Texture background4_texture;
+
+Sprite  background5_icon;
+Image   background5_image;
+Texture background5_texture;
+
 Texture sky_texture;
+Texture background1;
+Texture background2;
+Texture background3;
+Texture background4;
+Texture background5;
 
 float brightness = 1.0;
 float bright_copy;
+
+bool sky_texture_changed = false;
 
 class Interface
 {
@@ -180,6 +207,90 @@ public:
 		if (mouse.x >= pos.x && mouse.y >= pos.y && mouse.x <= pos.x + size.x && mouse.y <= pos.y + size.y && Mouse::isButtonPressed(Mouse::Button::Left))
 		{
 			click_counter++;
+			return true;
+		}
+		return false;
+	}
+};
+
+class button_add_background : public Interface
+{
+	int background_num = 0;
+
+public:
+	button_add_background(Vector2f size, Vector2f pos, int number)
+	{
+		this->size = size;
+		this->pos = pos;
+		this->name = "background";
+		background_num = number;
+	}
+
+	void draw() override
+	{
+		RectangleShape rectangle(size);
+		rectangle.move(pos);
+		if (click_counter % 2 == 0) rectangle.setFillColor(Color(83, 83, 83));
+		else					    rectangle.setFillColor(Color(59, 59, 59));
+
+		if (background_num == 1) background1_icon.setPosition(pos + Vector2f(13, 13));
+		if (background_num == 2) background2_icon.setPosition(pos + Vector2f(13, 13));
+		if (background_num == 3) background3_icon.setPosition(pos + Vector2f(13, 13));
+		if (background_num == 4) background4_icon.setPosition(pos + Vector2f(13, 13));
+		if (background_num == 5) background5_icon.setPosition(pos + Vector2f(13, 13));
+
+		interface.draw(rectangle);
+
+		if (background_num == 1) interface.draw(background1_icon);
+		if (background_num == 2) interface.draw(background2_icon);
+		if (background_num == 3) interface.draw(background3_icon);
+		if (background_num == 4) interface.draw(background4_icon);
+		if (background_num == 5) interface.draw(background5_icon);
+	}
+
+	float action() override 
+	{
+		if (background_num == 1 && sky_texture_changed)
+		{
+			Vector2u size = background1.getSize();
+			sky_texture.create(size.x, size.y);
+			sky_texture.update(background1);
+		}
+		if (background_num == 2 && sky_texture_changed)
+		{
+			Vector2u size = background2.getSize();
+			sky_texture.create(size.x, size.y);
+			sky_texture.update(background2);
+		}
+		if (background_num == 3 && sky_texture_changed)
+		{
+			Vector2u size = background3.getSize();
+			sky_texture.create(size.x, size.y);
+			sky_texture.update(background3);
+		}
+		if (background_num == 4 && sky_texture_changed)
+		{
+			Vector2u size = background4.getSize();
+			sky_texture.create(size.x, size.y);
+			sky_texture.update(background4);
+		}
+		if (background_num == 5 && sky_texture_changed)
+		{
+			Vector2u size = background5.getSize();
+			sky_texture.create(size.x, size.y);
+			sky_texture.update(background5);
+		}
+
+		return -1;
+	}
+
+	bool click() override
+	{
+		Vector2i mouse = Mouse::getPosition(interface);
+		if (mouse.x >= pos.x && mouse.y >= pos.y && mouse.x <= pos.x + size.x && mouse.y <= pos.y + size.y && Mouse::isButtonPressed(Mouse::Button::Left))
+		{
+			click_counter++;
+			sky_texture_changed = true;
 			return true;
 		}
 		return false;
@@ -400,25 +511,49 @@ public:
 
 class interface_manager
 {
-	std::vector<Interface*> buttons;
+	std::vector<Interface*> windows;
+	std::vector<Interface*> sphere_buttons;
+	std::vector<Interface*> cube_buttons;
+	std::vector<Interface*> light_buttons;
+	std::vector<Interface*> background_buttons;
+	
 	object_preview* preview;
 
 public:
 	interface_manager()
 	{
 		preview =         new object_preview   (Vector2f(300, 300), Vector2f(  0, 225));
-		buttons.push_back(new button_add_sphere(Vector2f( 96,  96), Vector2f(  3,   3)));
-		buttons.push_back(new button_add_cube  (Vector2f( 96,  96), Vector2f(102,   3)));
-		buttons.push_back(new button_add_light (Vector2f( 96,  96), Vector2f(201,   3)));
-		buttons.push_back(new button_background(Vector2f( 96,  96), Vector2f(  3, 102)));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 560), "R: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 613), "G: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 666), "B: 0",  255, -2));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 751), "si: 0", 200, -6));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 804), "sp:0",  1.0, -4));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 857), "n: 0",  2.5, -4));
-		buttons.push_back(new button_switch    (Vector2f(294,  50), Vector2f(  3, 560), "Br:0",  100, -8));
-		buttons.push_back(preview);
+		windows.push_back(new button_add_sphere(Vector2f( 96,  96), Vector2f(  3,   3)));
+		windows.push_back(new button_add_cube  (Vector2f( 96,  96), Vector2f(102,   3)));
+		windows.push_back(new button_add_light (Vector2f( 96,  96), Vector2f(201,   3)));
+		windows.push_back(new button_background(Vector2f( 96,  96), Vector2f(  3, 102)));
+		windows.push_back(preview);
+
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 560), "R: 0",  255, -2));
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 613), "G: 0",  255, -2));
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 666), "B: 0",  255, -2));
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 751), "si: 0", 200, -4));
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 804), "sp:0",  1.0, -4));
+		sphere_buttons.push_back(new button_switch(Vector2f(294,  50), Vector2f(  3, 857), "n: 0",  2.5, -4));
+
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 560), "R: 0",  255, -2));
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 613), "G: 0",  255, -2));
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 666), "B: 0",  255, -2));
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 751), "si: 0", 200, -4));
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 804), "sp:0",  1.0, -4));
+		cube_buttons.push_back  (new button_switch(Vector2f(294,  50), Vector2f(  3, 857), "n: 0",  2.5, -4));
+
+		light_buttons.push_back (new button_switch(Vector2f(294,  50), Vector2f(  3, 560), "R: 0",  255, -2));
+		light_buttons.push_back (new button_switch(Vector2f(294,  50), Vector2f(  3, 613), "G: 0",  255, -2));
+		light_buttons.push_back (new button_switch(Vector2f(294,  50), Vector2f(  3, 666), "B: 0",  255, -2));
+		light_buttons.push_back (new button_switch(Vector2f(294,  50), Vector2f(  3, 751), "si: 0", 200, -4));
+
+		background_buttons.push_back(new button_switch        (Vector2f(294,  50), Vector2f(  3, 560), "Br:0",  100, -8));
+		background_buttons.push_back(new button_add_background(Vector2f( 96,  96), Vector2f(  3, 613), 1));
+		background_buttons.push_back(new button_add_background(Vector2f( 96,  96), Vector2f(102, 613), 2));
+		background_buttons.push_back(new button_add_background(Vector2f( 96,  96), Vector2f(201, 613), 3));
+		background_buttons.push_back(new button_add_background(Vector2f( 96,  96), Vector2f(  3, 712), 4));
+		background_buttons.push_back(new button_add_background(Vector2f( 96,  96), Vector2f(102, 712), 5));
 	}
 
 	void getIcons()
@@ -443,45 +578,81 @@ public:
 		background_texture.loadFromImage(background_image);
 		background_icon.setTexture(background_texture);
 
+		background1_image.loadFromFile("Icons/background1icon.png");
+		background1_image.createMaskFromColor(Color(255, 255, 255));
+		background1_texture.loadFromImage(background1_image);
+		background1_icon.setTexture(background1_texture);
+
+		background2_image.loadFromFile("Icons/background2icon.png");
+		background2_image.createMaskFromColor(Color(255, 255, 255));
+		background2_texture.loadFromImage(background2_image);
+		background2_icon.setTexture(background2_texture);
+
+		background3_image.loadFromFile("Icons/background3icon.png");
+		background3_image.createMaskFromColor(Color(255, 255, 255));
+		background3_texture.loadFromImage(background3_image);
+		background3_icon.setTexture(background3_texture);
+
+		background4_image.loadFromFile("Icons/background4icon.png");
+		background4_image.createMaskFromColor(Color(255, 255, 255));
+		background4_texture.loadFromImage(background4_image);
+		background4_icon.setTexture(background4_texture);
+
+		background5_image.loadFromFile("Icons/background5icon.png");
+		background5_image.createMaskFromColor(Color(255, 255, 255));
+		background5_texture.loadFromImage(background5_image);
+		background5_icon.setTexture(background5_texture);
+
 		sky_texture.loadFromFile("Images/space1.jpeg");
+		background1.loadFromFile("Images/space1.jpeg");
+		background2.loadFromFile("Images/space2.jpeg");
+		background3.loadFromFile("Images/space3.jpeg");
+		background4.loadFromFile("Images/space4.jpeg");
+		background5.loadFromFile("Images/space5.jpeg");
 	}
 
 	void DrawInterface()
 	{
-		for (int i = 0; i < buttons.size(); i++)
-		{ 
-			Font font;
-			font.loadFromFile("Fonts/arial.ttf");
-			Text color("Color:", font, 24);
-			Text properties("Properties:", font, 24);
+		Font font;
+		font.loadFromFile("Fonts/arial.ttf");
+		Text color("Color:", font, 24);
+		Text properties("Properties:", font, 24);
 
-			if (buttons[i]->click_counter >= 0) buttons[i]->draw();
+		for (int i = 0; i < windows.size(); i++)
+		{
+			windows[i]->draw();
 
-			if (buttons[i]->selected && buttons[i]->name == "light")
+			if (windows[i]->selected && windows[i]->name == "sphere")
 			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter == -2 || buttons[i]->click_counter == -6) buttons[i]->draw();
+				for (int j = 0; j < sphere_buttons.size(); j++) sphere_buttons[j]->draw();
 				color.move(100, 528);
 				interface.draw(color);
 				properties.move(80, 720);
 				interface.draw(properties);
 			}
 
-			if (buttons[i]->selected && buttons[i]->name != "light" && buttons[i]->name != "background")
+			if (windows[i]->selected && windows[i]->name == "cube")
 			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter < 0 && buttons[i]->click_counter != -8) buttons[i]->draw();
+				for (int j = 0; j < cube_buttons.size(); j++) cube_buttons[j]->draw();
 				color.move(100, 528);
 				interface.draw(color);
 				properties.move(80, 720);
 				interface.draw(properties);
 			}
 
-			if (buttons[i]->selected && buttons[i]->name == "background")
+			if (windows[i]->selected && windows[i]->name == "light")
 			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter == -8) buttons[i]->draw();
-				properties.move(100, 528);
+				for (int j = 0; j < light_buttons.size(); j++) light_buttons[j]->draw();
+				color.move(100, 528);
+				interface.draw(color);
+				properties.move(80, 720);
+				interface.draw(properties);
+			}
+
+			if (windows[i]->selected && windows[i]->name == "background")
+			{
+				for (int j = 0; j < background_buttons.size(); j++) background_buttons[j]->draw();
+				properties.move(80, 528);
 				interface.draw(properties);
 			}
 		}
@@ -489,80 +660,98 @@ public:
 
 	void ButtonPressed() 
 	{
+		static int number_pressed_window = 0;
 		static int number_pressed_button = 0;
 		static Vector3f Color;
 		static Vector3f SSR;
 		int k1 = 0;
 		int k2 = 0;
+		static std::vector<Interface*> buttons;
 
-		for (int i = 0; i < buttons.size(); i++)
+		for (int i = 0; i < windows.size(); i++)
 		{
-			if (buttons[i]->click_counter >= 0)
+			if (windows[i]->click())
 			{
-				if (buttons[i]->click())
+				if (windows[i]->click_counter % 2 != 0)
 				{
-					if (buttons[i]->click_counter % 2 != 0)
+					windows[i]->selected = true;
+					preview->set_obj_name(windows[i]->name);
+				}
+				else
+				{
+					windows[i]->selected = false;
+					preview->set_obj_name("");
+				}
+				number_pressed_window = i;
+			}
+
+			if (windows[i]->selected)
+			{
+				Color = Vector3f(0, 0, 0);
+				SSR = Vector3f(0, 0, 0);
+				buttons = button_selection(windows[i]->name);
+				for (int j = 0; j < buttons.size(); j++)
+				{
+					if (buttons[j]->click())
 					{
-						buttons[i]->selected = true;
-						preview->set_obj_name(buttons[i]->name);
+						buttons[j]->action();
+						if (buttons[j]->click_counter % 2 != 0) buttons[j]->selected = true;
+						else                                    buttons[j]->selected = false;
+						number_pressed_button = j;
 					}
-					else
+
+					if (buttons[j]->click_counter == -2)
 					{
-						buttons[i]->selected = false;
-						preview->set_obj_name("");
+						k1++;
+						if (k1 == 1) Color.x = buttons[j]->action();
+						if (k1 == 2) Color.y = buttons[j]->action();
+						if (k1 == 3) Color.z = buttons[j]->action();
 					}
-					number_pressed_button = i;
+
+					if (buttons[j]->click_counter == -4)
+					{
+						k2++;
+						if (k2 == 1) SSR.x = buttons[j]->action();
+						if (k2 == 2) SSR.y = buttons[j]->action();
+						if (k2 == 3) SSR.z = buttons[j]->action();
+					}
+
+					if (buttons[j]->click_counter == -8)
+					{
+						brightness = 1.0 + 1.5 * buttons[j]->action() / 100;
+					}
+				}
+
+				preview->set_obj_color(Color);
+				preview->set_obj_properties(SSR);
+
+				for (int j = 0; j < buttons.size(); j++)
+				{
+					if (buttons[j]->click_counter % 2 != 0 && j != number_pressed_button)
+					{
+						buttons[j]->selected = false;
+						buttons[j]->click_counter--;
+					}
 				}
 			}
-
-			if (buttons[i]->selected && buttons[i]->name != "background")
-			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter == -2)
-					{
-						buttons[i]->click();
-						k1++;
-						if (k1 == 1) Color.x = buttons[i]->action();
-						if (k1 == 2) Color.y = buttons[i]->action();
-						if (k1 == 3) Color.z = buttons[i]->action();
-					}
-			}
-		
-			if (buttons[i]->selected && buttons[i]->name != "background")
-			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter == -4 || buttons[i]->click_counter == -6)
-					{
-						buttons[i]->click();
-						k2++;
-						if (k2 == 1) SSR.x = buttons[i]->action();
-						if (k2 == 2) SSR.y = buttons[i]->action();
-						if (k2 == 3) SSR.z = buttons[i]->action();
-					}
-			}
-
-			if (buttons[i]->selected && buttons[i]->name == "background")
-			{
-				for (int i = 0; i < buttons.size(); i++)
-					if (buttons[i]->click_counter == -8)
-					{
-						buttons[i]->click();
-						brightness = 1.0 + 1.5 * buttons[i]->action() / 100;
-					}
-			}
 		}
 
-		preview->set_obj_color(Color);
-		preview->set_obj_properties(SSR);
-
-		for (int i = 0; i < buttons.size(); i++)
+		for (int i = 0; i < windows.size(); i++)
 		{
-			if (buttons[i]->click_counter % 2 != 0 && i != number_pressed_button)
+			if (windows[i]->click_counter % 2 != 0 && i != number_pressed_window)
 			{
-				buttons[i]->selected = false;
-				buttons[i]->click_counter--;
+				windows[i]->selected = false;
+				windows[i]->click_counter--;
 			}
 		}
+	}
+
+	std::vector<Interface*> & button_selection(const char* name)
+	{
+		if (name == "sphere")     return sphere_buttons;
+		if (name == "cube")       return cube_buttons;
+		if (name == "light")      return light_buttons;
+		if (name == "background") return background_buttons;
 	}
 
 	~interface_manager()
